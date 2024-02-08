@@ -1,0 +1,63 @@
+---
+version: '3'
+
+services:
+  minio:
+    image: minio/minio
+    container_name: minio
+    networks:
+      iceberg_net:
+        aliases:
+          - warehouse.minio
+    command: [ "server", "/data", "--console-address", ":9001" ]
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - minio-data:/data
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      - MINIO_DOMAIN=minio
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  notebook:
+    build:
+      dockerfile: ./spark-iceberg.Dockerfile
+    container_name: spark-notebook
+    env_file:
+      - ./minio.env
+    environment:
+      - NOTEBOOK_ARGS="--LabApp.token='dev'"
+    ports:
+      - 8888:8888
+    networks:
+      iceberg_net:
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf:ro
+
+  spark-sql:
+    build:
+      dockerfile: ./spark-iceberg.Dockerfile
+    container_name: spark-sql
+    command: [ "/usr/local/spark/bin/spark-sql" ]
+    env_file:
+      - ./minio.env
+    volumes:
+      - ./spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf:ro
+    networks:
+      iceberg_net:
+
+
+volumes:
+  spark-cache:
+  minio-data:
+
+
+networks:
+  iceberg_net:
