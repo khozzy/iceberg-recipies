@@ -8,6 +8,3 @@ storage:
 
 spark_sql:
 	docker-compose run --rm spark /opt/spark/bin/spark-sql
-
-pyspark:
-	docker-compose run --rm spark /opt/spark/bin/pyspark
