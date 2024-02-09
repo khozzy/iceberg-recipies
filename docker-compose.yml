@@ -8,7 +8,8 @@ services:
     networks:
       iceberg_net:
         aliases:
-          - warehouse.minio
+          - whhadoop.minio
+          - whjdbc.minio
     command: [ "server", "/data", "--console-address", ":9001" ]
     ports:
       - 9000:9000
@@ -25,37 +26,64 @@ services:
       timeout: 5s
       retries: 5
 
-  notebook:
-    build:
-      dockerfile: ./spark-iceberg.Dockerfile
-    container_name: spark-notebook
-    env_file:
-      - ./minio.env
-    environment:
-      - NOTEBOOK_ARGS="--LabApp.token='dev'"
+  db:
+    image: postgres:16
+    container_name: metadata_db
+    restart: always
     ports:
-      - 8888:8888
+      - 5432:5432
+    environment:
+      POSTGRES_USER: icebergcat
+      POSTGRES_PASSWORD: minio
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
     networks:
       iceberg_net:
-    volumes:
-      - ./notebooks:/home/jovyan/work
-      - ./spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf:ro
 
-  spark-sql:
+
+  spark:
     build:
-      dockerfile: ./spark-iceberg.Dockerfile
-    container_name: spark-sql
-    command: [ "/usr/local/spark/bin/spark-sql" ]
+      context: ./spark
+    container_name: spark
+    # command: [ "/opt/spark/bin/spark-sql" ]
     env_file:
-      - ./minio.env
+      - ./minio/minio.env
     volumes:
-      - ./spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf:ro
+      - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
     networks:
       iceberg_net:
+
+        # notebook:
+        #   build:
+        #     dockerfile: ./spark-iceberg.Dockerfile
+        #   container_name: spark-notebook
+        #   env_file:
+        #     - ./minio.env
+        #   environment:
+        #     - NOTEBOOK_ARGS="--LabApp.token='dev'"
+        #   ports:
+        #     - 8888:8888
+        #   networks:
+        #     iceberg_net:
+        #   volumes:
+        #     - ./notebooks:/home/jovyan/work
+        #     - ./spark/spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf:ro
+
+        # spark-sql:
+        #   build:
+        #     dockerfile: ./spark-iceberg.Dockerfile
+        #   container_name: spark-sql
+        #   command: [ "/usr/local/spark/bin/spark-sql" ]
+        #   env_file:
+        #     - ./minio.env
+        #   volumes:
+        #     - ./spark/spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf:ro
+        #   networks:
+        #     iceberg_net:
 
 
 volumes:
-  spark-cache:
+  postgres-data:
   minio-data:
 
 
