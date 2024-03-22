@@ -1,4 +1,6 @@
-# Developers Apache Iceberg Recipies
+# Developers Guide to Data Lakehouse with Apache Iceberg
+[Blog post](https://kozlov.ski/developers-guide-to-data-lakehouse-with-apache-iceberg/)
+
 Examine [justfile](./justfile) recipies to get started.
 
 ## Storage layer setup
