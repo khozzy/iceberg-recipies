@@ -45,7 +45,7 @@ services:
     build:
       context: ./spark
     container_name: spark
-    # command: [ "/opt/spark/bin/spark-sql" ]
+    command: [ "/opt/spark/bin/spark-sql" ]
     env_file:
       - ./minio/minio.env
     volumes:
@@ -53,38 +53,26 @@ services:
     networks:
       iceberg_net:
 
-        # notebook:
-        #   build:
-        #     dockerfile: ./spark-iceberg.Dockerfile
-        #   container_name: spark-notebook
-        #   env_file:
-        #     - ./minio.env
-        #   environment:
-        #     - NOTEBOOK_ARGS="--LabApp.token='dev'"
-        #   ports:
-        #     - 8888:8888
-        #   networks:
-        #     iceberg_net:
-        #   volumes:
-        #     - ./notebooks:/home/jovyan/work
-        #     - ./spark/spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf:ro
 
-        # spark-sql:
-        #   build:
-        #     dockerfile: ./spark-iceberg.Dockerfile
-        #   container_name: spark-sql
-        #   command: [ "/usr/local/spark/bin/spark-sql" ]
-        #   env_file:
-        #     - ./minio.env
-        #   volumes:
-        #     - ./spark/spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf:ro
-        #   networks:
-        #     iceberg_net:
+  trino:
+    image: trinodb/trino:438
+    container_name: trino
+    ports:
+      - 8081:8080
+    env_file:
+      - ./minio/minio.env
+    volumes:
+      - trino-data:/data/trino
+      - ./trino/catalog/warehouse.properties:/etc/trino/catalog/warehouse.properties:ro
+      - ./trino/catalog/metastore.properties:/etc/trino/catalog/metastore.properties:ro
+    networks:
+      iceberg_net:
 
 
 volumes:
   postgres-data:
   minio-data:
+  trino-data:
 
 
 networks:
